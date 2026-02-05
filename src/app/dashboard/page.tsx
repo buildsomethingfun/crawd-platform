@@ -7,40 +7,55 @@ import { mux, MUX_RTMP_URL } from "@/lib/mux";
 import { CopyButton } from "./copy-button";
 
 async function ensureUserAndStream() {
+  console.log("[dashboard] Starting ensureUserAndStream");
+
   const { userId } = await auth();
+  console.log("[dashboard] auth() returned userId:", userId ? "present" : "null");
   if (!userId) return null;
 
   const user = await currentUser();
+  console.log("[dashboard] currentUser() returned:", user ? "present" : "null");
   if (!user) return null;
 
   // Ensure user exists
+  console.log("[dashboard] Querying for existing user");
   let existingUser = await db.query.users.findFirst({
     where: eq(users.id, userId),
   });
+  console.log("[dashboard] Existing user:", existingUser ? "found" : "not found");
 
   if (!existingUser) {
+    console.log("[dashboard] Creating new user");
     const [newUser] = await db.insert(users).values({
       id: userId,
       email: user.emailAddresses[0]?.emailAddress ?? "",
       displayName: user.firstName || user.username || "Streamer",
     }).returning();
     existingUser = newUser;
+    console.log("[dashboard] User created");
   }
 
   // Ensure stream exists (singleton per user)
+  console.log("[dashboard] Querying for existing stream");
   let userStream = await db.query.streams.findFirst({
     where: eq(streams.userId, userId),
   });
+  console.log("[dashboard] Existing stream:", userStream ? "found" : "not found");
 
   if (!userStream) {
-    // Create Mux live stream
+    console.log("[dashboard] Creating Mux live stream");
+    console.log("[dashboard] MUX_TOKEN_ID present:", !!process.env.MUX_TOKEN_ID);
+    console.log("[dashboard] MUX_TOKEN_SECRET present:", !!process.env.MUX_TOKEN_SECRET);
+
     const liveStream = await mux.video.liveStreams.create({
       playback_policy: ["public"],
       new_asset_settings: { playback_policy: ["public"] },
     });
+    console.log("[dashboard] Mux stream created:", liveStream.id);
 
     const playbackId = liveStream.playback_ids?.[0]?.id;
 
+    console.log("[dashboard] Inserting stream into database");
     const [newStream] = await db
       .insert(streams)
       .values({
@@ -53,8 +68,10 @@ async function ensureUserAndStream() {
       })
       .returning();
     userStream = newStream;
+    console.log("[dashboard] Stream inserted");
   }
 
+  console.log("[dashboard] Returning data");
   return { user: existingUser, stream: userStream };
 }
 
@@ -154,15 +171,21 @@ export default async function DashboardPage() {
       </div>
     );
   } catch (error) {
-    console.error("Dashboard error:", error);
+    console.error("[dashboard] Error:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error("[dashboard] Error stack:", errorStack);
+
     return (
       <div>
         <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
         <div className="glass rounded-2xl p-6">
           <h2 className="text-lg font-semibold text-red-400 mb-2">Error loading dashboard</h2>
-          <p className="text-white/50 text-sm">
-            {error instanceof Error ? error.message : "Unknown error occurred"}
-          </p>
+          <p className="text-white/50 text-sm mb-4">{errorMessage}</p>
+          <details className="text-xs text-white/30">
+            <summary className="cursor-pointer">Debug info</summary>
+            <pre className="mt-2 overflow-auto">{errorStack || "No stack trace"}</pre>
+          </details>
         </div>
       </div>
     );
