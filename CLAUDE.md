@@ -41,6 +41,28 @@ PGPASSWORD="<password>" psql -h <host> -U <user> -d <db> -c "SQL HERE"
 ```bash
 cd /Users/m/crawd-platform
 vercel env add VAR_NAME production <<< "value"
+
+# For values with special characters (/, +, etc), use printf:
+printf '%s' 'value-with/special+chars' | vercel env add VAR_NAME production
+```
+
+### Debugging Production
+
+```bash
+# List recent deployments
+vercel ls
+
+# View runtime logs (streams live for ~5 min)
+vercel logs <deployment-url>
+
+# View logs as JSON (for filtering with jq)
+vercel logs <deployment-url> --json
+
+# Filter for errors
+vercel logs <deployment-url> --json | jq 'select(.level == "error")'
+
+# Check env vars are set
+vercel env ls production
 ```
 
 ### GitHub Secrets (already configured)
