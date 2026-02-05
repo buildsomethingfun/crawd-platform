@@ -16,13 +16,7 @@ export default function DashboardLayout({
             </Link>
             <div className="flex gap-6 text-sm text-white/50">
               <Link href="/dashboard" className="hover:text-white/90 transition-colors">
-                Overview
-              </Link>
-              <Link href="/dashboard/streams" className="hover:text-white/90 transition-colors">
-                Streams
-              </Link>
-              <Link href="/dashboard/api-keys" className="hover:text-white/90 transition-colors">
-                API Keys
+                Dashboard
               </Link>
               <Link href="/dashboard/settings" className="hover:text-white/90 transition-colors">
                 Settings

@@ -1,130 +1,155 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
-import Link from "next/link";
 import { db } from "@/db";
-import { users, apiKeys, streams } from "@/db/schema";
+import { users, streams } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { nanoid } from "nanoid";
+import { mux, MUX_RTMP_URL } from "@/lib/mux";
+import { CopyButton } from "./copy-button";
 
-async function ensureUser() {
+async function ensureUserAndStream() {
   const { userId } = await auth();
   if (!userId) return null;
 
   const user = await currentUser();
   if (!user) return null;
 
-  const existingUser = await db.query.users.findFirst({
+  // Ensure user exists
+  let existingUser = await db.query.users.findFirst({
     where: eq(users.id, userId),
   });
 
   if (!existingUser) {
-    await db.insert(users).values({
+    const [newUser] = await db.insert(users).values({
       id: userId,
       email: user.emailAddresses[0]?.emailAddress ?? "",
-    });
+      displayName: user.firstName || user.username || "Streamer",
+    }).returning();
+    existingUser = newUser;
   }
 
-  return userId;
+  // Ensure stream exists (singleton per user)
+  let userStream = await db.query.streams.findFirst({
+    where: eq(streams.userId, userId),
+  });
+
+  if (!userStream) {
+    // Create Mux live stream
+    const liveStream = await mux.video.liveStreams.create({
+      playback_policy: ["public"],
+      new_asset_settings: { playback_policy: ["public"] },
+    });
+
+    const playbackId = liveStream.playback_ids?.[0]?.id;
+
+    const [newStream] = await db
+      .insert(streams)
+      .values({
+        id: nanoid(),
+        userId,
+        name: existingUser.displayName || "My Stream",
+        streamKey: liveStream.stream_key!,
+        muxLiveStreamId: liveStream.id,
+        muxPlaybackId: playbackId,
+      })
+      .returning();
+    userStream = newStream;
+  }
+
+  return { user: existingUser, stream: userStream };
 }
 
 export default async function DashboardPage() {
-  const userId = await ensureUser();
-  if (!userId) return null;
+  const data = await ensureUserAndStream();
+  if (!data) return null;
 
-  const [userApiKeys, userStreams] = await Promise.all([
-    db.query.apiKeys.findMany({
-      where: eq(apiKeys.userId, userId),
-    }),
-    db.query.streams.findMany({
-      where: eq(streams.userId, userId),
-    }),
-  ]);
-
-  const activeKeys = userApiKeys.filter((k) => k.isActive);
+  const { stream } = data;
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-8">Overview</h1>
+      <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
 
-      <div className="grid md:grid-cols-3 gap-4 mb-10">
-        <div className="glass rounded-2xl p-6">
-          <p className="text-sm text-white/50 mb-1">Active API Keys</p>
-          <p className="text-4xl font-bold">{activeKeys.length}</p>
+      {/* Stream Status */}
+      <div className="glass rounded-2xl p-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Stream Status</h2>
+          {stream.isLive ? (
+            <span className="px-3 py-1 bg-red-500/20 text-red-400 text-sm rounded-lg flex items-center gap-2">
+              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+              LIVE
+            </span>
+          ) : (
+            <span className="px-3 py-1 bg-white/10 text-white/50 text-sm rounded-lg">
+              Offline
+            </span>
+          )}
         </div>
-        <div className="glass rounded-2xl p-6">
-          <p className="text-sm text-white/50 mb-1">Total Streams</p>
-          <p className="text-4xl font-bold">{userStreams.length}</p>
-        </div>
-        <div className="glass rounded-2xl p-6">
-          <p className="text-sm text-white/50 mb-1">Live Now</p>
-          <p className="text-4xl font-bold">
-            {userStreams.filter((s) => s.isLive).length}
-          </p>
+        {stream.isLive && stream.muxPlaybackId && (
+          <a
+            href={`/preview/${stream.muxPlaybackId}`}
+            target="_blank"
+            className="text-accent hover:underline text-sm"
+          >
+            View live preview →
+          </a>
+        )}
+      </div>
+
+      {/* OBS Credentials */}
+      <div className="glass rounded-2xl p-6 mb-6">
+        <h2 className="text-lg font-semibold mb-4">OBS Settings</h2>
+        <p className="text-sm text-white/50 mb-6">
+          Copy these settings into OBS Studio → Settings → Stream
+        </p>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs text-white/40 mb-2 uppercase tracking-wide">
+              Server
+            </label>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 px-4 py-3 bg-black/30 rounded-xl font-mono text-sm text-white/80">
+                {MUX_RTMP_URL}
+              </code>
+              <CopyButton text={MUX_RTMP_URL} />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs text-white/40 mb-2 uppercase tracking-wide">
+              Stream Key
+            </label>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 px-4 py-3 bg-black/30 rounded-xl font-mono text-sm text-white/80 break-all">
+                {stream.streamKey}
+              </code>
+              <CopyButton text={stream.streamKey} />
+            </div>
+          </div>
         </div>
       </div>
 
-      <section className="mb-10">
-        <h2 className="text-lg font-semibold mb-4 text-white/70">Quick Actions</h2>
-        <div className="grid md:grid-cols-2 gap-4">
-          <Link
-            href="/dashboard/streams"
-            className="glass rounded-2xl p-6 hover:bg-white/10 transition-colors group"
-          >
-            <h3 className="font-semibold mb-2 group-hover:text-accent transition-colors">Create Stream</h3>
-            <p className="text-sm text-white/50">
-              Set up a new stream and get your OBS credentials
-            </p>
-          </Link>
-          <Link
-            href="/dashboard/api-keys"
-            className="glass rounded-2xl p-6 hover:bg-white/10 transition-colors group"
-          >
-            <h3 className="font-semibold mb-2 group-hover:text-accent transition-colors">Generate API Key</h3>
-            <p className="text-sm text-white/50">
-              Create a key for CLI or integrations
-            </p>
-          </Link>
-        </div>
-      </section>
+      {/* OpenClaw CLI */}
+      <div className="glass rounded-2xl p-6">
+        <h2 className="text-lg font-semibold mb-2">Add Livestream Skill to OpenClaw</h2>
+        <p className="text-sm text-white/50 mb-6">
+          Let your AI agent control your stream with the Crawd CLI
+        </p>
 
-      <section>
-        <h2 className="text-lg font-semibold mb-4 text-white/70">Getting Started</h2>
-        <div className="glass rounded-2xl p-6">
-          <ol className="space-y-4 text-white/80">
-            <li className="flex gap-4">
-              <span className="flex-shrink-0 w-8 h-8 accent-gradient rounded-full flex items-center justify-center text-sm font-bold text-black">
-                1
-              </span>
-              <div>
-                <p className="font-medium">Create a stream</p>
-                <p className="text-sm text-white/50 mt-1">
-                  Go to Streams and create your first stream
-                </p>
-              </div>
-            </li>
-            <li className="flex gap-4">
-              <span className="flex-shrink-0 w-8 h-8 accent-gradient rounded-full flex items-center justify-center text-sm font-bold text-black">
-                2
-              </span>
-              <div>
-                <p className="font-medium">Configure OBS</p>
-                <p className="text-sm text-white/50 mt-1">
-                  Use the RTMP URL and stream key in OBS
-                </p>
-              </div>
-            </li>
-            <li className="flex gap-4">
-              <span className="flex-shrink-0 w-8 h-8 accent-gradient rounded-full flex items-center justify-center text-sm font-bold text-black">
-                3
-              </span>
-              <div>
-                <p className="font-medium">Go live</p>
-                <p className="text-sm text-white/50 mt-1">
-                  Start streaming and share your preview link
-                </p>
-              </div>
-            </li>
-          </ol>
+        <div className="bg-black/30 rounded-xl p-4 font-mono text-sm space-y-2">
+          <p className="text-white/40"># Install the CLI</p>
+          <p className="text-white/80">npm install -g @crawd/cli</p>
+          <p className="text-white/80 mt-4"></p>
+          <p className="text-white/40"># Authenticate</p>
+          <p className="text-white/80">crawd auth</p>
+          <p className="text-white/80 mt-4"></p>
+          <p className="text-white/40"># Install the livestream skill</p>
+          <p className="text-white/80">crawd skill install livestream</p>
+          <p className="text-white/80 mt-4"></p>
+          <p className="text-white/40"># Control your stream</p>
+          <p className="text-white/80">crawd stream start</p>
+          <p className="text-white/80">crawd stream stop</p>
         </div>
-      </section>
+      </div>
     </div>
   );
 }
