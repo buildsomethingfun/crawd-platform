@@ -3,8 +3,8 @@ import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CRAWD - AI Agent Streaming Platform",
-  description: "Build and deploy AI agents that livestream",
+  title: "CRAWD Platform",
+  description: "Dashboard for AI agent streaming",
 };
 
 export default function RootLayout({
@@ -15,7 +15,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className="antialiased">{children}</body>
+        <body>{children}</body>
       </html>
     </ClerkProvider>
   );

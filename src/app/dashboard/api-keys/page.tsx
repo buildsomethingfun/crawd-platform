@@ -60,7 +60,7 @@ export default function ApiKeysPage() {
     <div>
       <h1 className="text-3xl font-bold mb-8">API Keys</h1>
 
-      <div className="mb-8 p-6 bg-white/5 rounded-xl border border-white/10">
+      <div className="glass rounded-2xl p-6 mb-8">
         <h2 className="text-lg font-semibold mb-4">Create New API Key</h2>
         <form onSubmit={createKey} className="flex gap-4">
           <input
@@ -68,53 +68,50 @@ export default function ApiKeysPage() {
             value={newKeyName}
             onChange={(e) => setNewKeyName(e.target.value)}
             placeholder="Key name (e.g., My Agent)"
-            className="flex-1 px-4 py-2 bg-black/50 border border-white/20 rounded-lg focus:outline-none focus:border-white/40"
+            className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-white/30 placeholder:text-white/30"
           />
           <button
             type="submit"
             disabled={creating || !newKeyName.trim()}
-            className="px-6 py-2 bg-white text-black rounded-lg font-medium hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-3 accent-gradient text-black font-semibold rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
           >
-            {creating ? "Creating..." : "Create Key"}
+            {creating ? "Creating..." : "Create"}
           </button>
         </form>
       </div>
 
       {newKey && (
-        <div className="mb-8 p-6 bg-green-500/10 border border-green-500/30 rounded-xl">
+        <div className="mb-8 p-6 bg-green-500/10 border border-green-500/20 rounded-2xl">
           <h3 className="font-semibold text-green-400 mb-2">
-            API Key Created!
+            API Key Created
           </h3>
-          <p className="text-sm text-gray-400 mb-4">
-            Make sure to copy your API key now. You won&apos;t be able to see it
-            again!
+          <p className="text-sm text-white/50 mb-4">
+            Copy your key now. You won&apos;t be able to see it again.
           </p>
           <div className="flex items-center gap-2">
-            <code className="flex-1 p-3 bg-black/50 rounded font-mono text-sm break-all">
+            <code className="flex-1 p-3 bg-black/30 rounded-xl font-mono text-sm break-all text-white/80">
               {newKey}
             </code>
             <button
-              onClick={() => {
-                navigator.clipboard.writeText(newKey);
-              }}
-              className="px-4 py-3 bg-white/10 rounded hover:bg-white/20"
+              onClick={() => navigator.clipboard.writeText(newKey)}
+              className="px-4 py-3 bg-white/10 rounded-xl hover:bg-white/20 transition-colors"
             >
               Copy
             </button>
           </div>
           <button
             onClick={() => setNewKey(null)}
-            className="mt-4 text-sm text-gray-400 hover:text-white"
+            className="mt-4 text-sm text-white/50 hover:text-white/80"
           >
             Dismiss
           </button>
         </div>
       )}
 
-      <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+      <div className="glass rounded-2xl overflow-hidden">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-white/10 text-left text-sm text-gray-400">
+            <tr className="border-b border-white/10 text-left text-sm text-white/50">
               <th className="px-6 py-4 font-medium">Name</th>
               <th className="px-6 py-4 font-medium">Key</th>
               <th className="px-6 py-4 font-medium">Created</th>
@@ -126,13 +123,13 @@ export default function ApiKeysPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
+                <td colSpan={6} className="px-6 py-8 text-center text-white/50">
                   Loading...
                 </td>
               </tr>
             ) : keys.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
+                <td colSpan={6} className="px-6 py-8 text-center text-white/50">
                   No API keys yet. Create one above.
                 </td>
               </tr>
@@ -140,24 +137,24 @@ export default function ApiKeysPage() {
               keys.map((key) => (
                 <tr key={key.id} className="border-b border-white/5">
                   <td className="px-6 py-4">{key.name}</td>
-                  <td className="px-6 py-4 font-mono text-sm text-gray-400">
+                  <td className="px-6 py-4 font-mono text-sm text-white/50">
                     {key.keyPrefix}...
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-400">
+                  <td className="px-6 py-4 text-sm text-white/50">
                     {new Date(key.createdAt).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-400">
+                  <td className="px-6 py-4 text-sm text-white/50">
                     {key.lastUsedAt
                       ? new Date(key.lastUsedAt).toLocaleDateString()
                       : "Never"}
                   </td>
                   <td className="px-6 py-4">
                     {key.isActive ? (
-                      <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded">
+                      <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-lg">
                         Active
                       </span>
                     ) : (
-                      <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded">
+                      <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded-lg">
                         Revoked
                       </span>
                     )}

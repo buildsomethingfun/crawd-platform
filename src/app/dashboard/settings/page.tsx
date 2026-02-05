@@ -39,7 +39,7 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="p-8 text-center text-gray-400">Loading...</div>
+      <div className="glass rounded-2xl p-8 text-center text-white/50">Loading...</div>
     );
   }
 
@@ -48,11 +48,11 @@ export default function SettingsPage() {
       <h1 className="text-3xl font-bold mb-8">Settings</h1>
 
       <div className="max-w-xl">
-        <div className="p-6 bg-white/5 rounded-xl border border-white/10">
-          <h2 className="text-lg font-semibold mb-4">Streamer Profile</h2>
-          <form onSubmit={saveProfile} className="space-y-4">
+        <div className="glass rounded-2xl p-6">
+          <h2 className="text-lg font-semibold mb-6">Streamer Profile</h2>
+          <form onSubmit={saveProfile} className="space-y-5">
             <div>
-              <label className="block text-sm text-gray-400 mb-2">
+              <label className="block text-sm text-white/50 mb-2">
                 Display Name
               </label>
               <input
@@ -60,24 +60,24 @@ export default function SettingsPage() {
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Your streamer name"
-                className="w-full px-4 py-2 bg-black/50 border border-white/20 rounded-lg focus:outline-none focus:border-white/40"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-white/30 placeholder:text-white/30"
               />
             </div>
             <div>
-              <label className="block text-sm text-gray-400 mb-2">Bio</label>
+              <label className="block text-sm text-white/50 mb-2">Bio</label>
               <textarea
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 placeholder="Tell viewers about yourself..."
                 rows={4}
-                className="w-full px-4 py-2 bg-black/50 border border-white/20 rounded-lg focus:outline-none focus:border-white/40 resize-none"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-white/30 placeholder:text-white/30 resize-none"
               />
             </div>
             <div className="flex items-center gap-4">
               <button
                 type="submit"
                 disabled={saving}
-                className="px-6 py-2 bg-white text-black rounded-lg font-medium hover:bg-gray-200 disabled:opacity-50"
+                className="px-6 py-3 accent-gradient text-black font-semibold rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity"
               >
                 {saving ? "Saving..." : "Save"}
               </button>
