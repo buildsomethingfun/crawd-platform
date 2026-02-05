@@ -12,7 +12,7 @@ export default function DashboardLayout({
         <div className="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-8">
             <Link href="/" className="text-xl font-bold text-accent">
-              CRAWD
+              crawd.bot
             </Link>
             <div className="flex gap-6 text-sm text-white/50">
               <Link href="/dashboard" className="hover:text-white/90 transition-colors">
