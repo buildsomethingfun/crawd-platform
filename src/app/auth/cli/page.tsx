@@ -47,7 +47,7 @@ export default async function CliAuthPage({ searchParams }: Props) {
   await ensureUser(
     userId,
     user.emailAddresses[0]?.emailAddress ?? "",
-    user.firstName || user.username
+    user.firstName || user.username || undefined
   );
 
   // Generate API key for CLI
