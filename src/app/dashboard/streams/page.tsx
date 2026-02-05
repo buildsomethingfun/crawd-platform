@@ -1,11 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 
 type Stream = {
   id: string;
   name: string;
   streamKey: string;
+  muxPlaybackId: string | null;
+  rtmpUrl: string;
   isLive: boolean;
   viewerCount: number;
   createdAt: string;
@@ -109,28 +112,62 @@ export default function StreamsPage() {
                     </p>
                   )}
                 </div>
-                <button
-                  onClick={() => deleteStream(stream.id)}
-                  className="text-sm text-red-400 hover:text-red-300"
-                >
-                  Delete
-                </button>
+                <div className="flex gap-3">
+                  {stream.muxPlaybackId && (
+                    <Link
+                      href={`/preview/${stream.muxPlaybackId}`}
+                      className="text-sm text-blue-400 hover:text-blue-300"
+                      target="_blank"
+                    >
+                      Preview
+                    </Link>
+                  )}
+                  <button
+                    onClick={() => deleteStream(stream.id)}
+                    className="text-sm text-red-400 hover:text-red-300"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
 
-              <div className="p-4 bg-black/30 rounded-lg">
-                <p className="text-xs text-gray-400 mb-2">Stream Key</p>
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 font-mono text-sm text-gray-300 break-all">
-                    {stream.streamKey}
-                  </code>
-                  <button
-                    onClick={() =>
-                      navigator.clipboard.writeText(stream.streamKey)
-                    }
-                    className="px-3 py-1 bg-white/10 rounded text-sm hover:bg-white/20"
-                  >
-                    Copy
-                  </button>
+              <div className="space-y-3">
+                <div className="p-4 bg-black/30 rounded-lg">
+                  <p className="text-xs text-gray-400 mb-2">OBS Settings</p>
+                  <div className="space-y-2">
+                    <div>
+                      <p className="text-xs text-gray-500">Server</p>
+                      <div className="flex items-center gap-2">
+                        <code className="flex-1 font-mono text-sm text-gray-300">
+                          {stream.rtmpUrl}
+                        </code>
+                        <button
+                          onClick={() =>
+                            navigator.clipboard.writeText(stream.rtmpUrl)
+                          }
+                          className="px-3 py-1 bg-white/10 rounded text-sm hover:bg-white/20"
+                        >
+                          Copy
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Stream Key</p>
+                      <div className="flex items-center gap-2">
+                        <code className="flex-1 font-mono text-sm text-gray-300 break-all">
+                          {stream.streamKey}
+                        </code>
+                        <button
+                          onClick={() =>
+                            navigator.clipboard.writeText(stream.streamKey)
+                          }
+                          className="px-3 py-1 bg-white/10 rounded text-sm hover:bg-white/20"
+                        >
+                          Copy
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

@@ -4,10 +4,7 @@ import { nanoid } from "nanoid";
 import { db } from "@/db";
 import { streams } from "@/db/schema";
 import { eq } from "drizzle-orm";
-
-function generateStreamKey(): string {
-  return `live_${nanoid(32)}`;
-}
+import { mux, MUX_RTMP_URL } from "@/lib/mux";
 
 export async function GET() {
   const { userId } = await auth();
@@ -20,7 +17,12 @@ export async function GET() {
     orderBy: (streams, { desc }) => [desc(streams.createdAt)],
   });
 
-  return NextResponse.json({ streams: userStreams });
+  return NextResponse.json({
+    streams: userStreams.map((s) => ({
+      ...s,
+      rtmpUrl: MUX_RTMP_URL,
+    })),
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -36,7 +38,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Name is required" }, { status: 400 });
   }
 
-  const streamKey = generateStreamKey();
+  // Create Mux live stream
+  const liveStream = await mux.video.liveStreams.create({
+    playback_policy: ["public"],
+    new_asset_settings: { playback_policy: ["public"] },
+  });
+
+  const playbackId = liveStream.playback_ids?.[0]?.id;
 
   const [stream] = await db
     .insert(streams)
@@ -44,9 +52,16 @@ export async function POST(request: NextRequest) {
       id: nanoid(),
       userId,
       name,
-      streamKey,
+      streamKey: liveStream.stream_key!,
+      muxLiveStreamId: liveStream.id,
+      muxPlaybackId: playbackId,
     })
     .returning();
 
-  return NextResponse.json({ stream });
+  return NextResponse.json({
+    stream: {
+      ...stream,
+      rtmpUrl: MUX_RTMP_URL,
+    },
+  });
 }

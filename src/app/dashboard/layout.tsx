@@ -24,6 +24,9 @@ export default function DashboardLayout({
               <Link href="/dashboard/streams" className="hover:text-white">
                 Streams
               </Link>
+              <Link href="/dashboard/settings" className="hover:text-white">
+                Settings
+              </Link>
             </div>
           </div>
           <UserButton />

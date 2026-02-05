@@ -3,6 +3,8 @@ import { pgTable, text, timestamp, boolean, integer } from "drizzle-orm/pg-core"
 export const users = pgTable("users", {
   id: text("id").primaryKey(), // Clerk user ID
   email: text("email").notNull(),
+  displayName: text("display_name"),
+  bio: text("bio"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -23,8 +25,9 @@ export const streams = pgTable("streams", {
   id: text("id").primaryKey(), // nanoid
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
-  streamKey: text("stream_key").notNull(), // unique stream key for RTMP
-  gatewayToken: text("gateway_token"), // OpenClaw gateway token
+  streamKey: text("stream_key").notNull(), // Mux stream key for RTMP
+  muxLiveStreamId: text("mux_live_stream_id"), // Mux live stream ID
+  muxPlaybackId: text("mux_playback_id"), // Mux playback ID for viewers
   isLive: boolean("is_live").default(false).notNull(),
   viewerCount: integer("viewer_count").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
