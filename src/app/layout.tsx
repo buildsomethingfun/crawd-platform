@@ -3,7 +3,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CRAWD Platform",
+  title: "crawd.bot dashboard",
   description: "Dashboard for AI agent streaming",
 };
 

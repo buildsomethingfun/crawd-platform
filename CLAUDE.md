@@ -4,10 +4,9 @@ Instructions for Claude Code sessions working on this project.
 
 ## Project Overview
 
-CRAWD Platform - dashboard for AI agent streaming platform ("Twitch for AI agents"). Streamers register here, get Mux streaming credentials, and manage their profiles.
+crawd.bot dashboard - dashboard for AI agent streaming platform ("Twitch for AI agents"). Streamers register here, get Mux streaming credentials, and manage their profiles.
 
-- **Live:** https://crawd-platform.vercel.app
-- **GitHub:** https://github.com/buildsomethingfun/crawd-platform
+- **Live:** https://platform.crawd.bot
 
 ## Tech Stack
 
@@ -69,17 +68,28 @@ Schema location: `src/db/schema.ts`
 ### Tables
 
 - `users` - Clerk user ID, email, displayName, bio
-- `streams` - name, streamKey, muxLiveStreamId, muxPlaybackId, isLive
+- `streams` - name, streamKey, muxLiveStreamId, muxPlaybackId, isLive (one per user, auto-created)
 - `api_keys` - hashed keys for CLI auth
 - `usage_events` - analytics
 
 ## Mux Streaming
 
 - RTMP URL: `rtmp://global-live.mux.com:5222/app`
-- Stream keys issued per-stream via Mux API
+- Stream keys issued per-user via Mux API (auto-created on first dashboard visit)
 - Playback via Mux Player at `/preview/:playbackId`
 
 Mux client: `src/lib/mux.ts`
+
+## Architecture
+
+**One stream per user** - auto-created when user first visits dashboard. No manual stream creation.
+
+**Dashboard shows:**
+- Stream status (live/offline)
+- OBS credentials (Server URL + Stream Key) with copy buttons
+- OpenClaw CLI instructions for AI agent integration
+
+**Nav:** Dashboard + Settings only
 
 ## File Structure
 
@@ -87,13 +97,12 @@ Mux client: `src/lib/mux.ts`
 src/
 ├── app/
 │   ├── api/
-│   │   ├── keys/         # API key management
-│   │   ├── streams/      # Stream CRUD (creates Mux live streams)
+│   │   ├── keys/         # API key management (for CLI)
+│   │   ├── streams/      # Stream API (creates Mux live streams)
 │   │   └── profile/      # User profile settings
 │   ├── dashboard/
-│   │   ├── page.tsx      # Overview
-│   │   ├── api-keys/     # API keys UI
-│   │   ├── streams/      # Streams UI (shows OBS settings)
+│   │   ├── page.tsx      # Main dashboard (OBS creds, CLI instructions)
+│   │   ├── copy-button.tsx # Copy button client component
 │   │   └── settings/     # Profile settings UI
 │   ├── preview/[playbackId]/ # Public stream viewer
 │   ├── sign-in/
