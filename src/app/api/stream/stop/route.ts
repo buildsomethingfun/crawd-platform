@@ -6,7 +6,9 @@ import { authenticateApiKey } from "@/lib/auth-api-key";
 import { mux } from "@/lib/mux";
 
 /**
- * POST /api/stream/stop - Disable the user's Mux live stream
+ * POST /api/stream/stop - Disconnect OBS and stop the live stream.
+ * Disables then immediately re-enables the Mux stream so the RTMP
+ * endpoint is ready for the next session.
  * Requires API key auth: Authorization: Bearer crawd_live_...
  */
 export async function POST(request: NextRequest) {
@@ -27,13 +29,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No Mux stream configured" }, { status: 400 });
   }
 
-  // Disable the live stream on Mux — this cuts RTMP ingest and stops playback
+  // Disable to cut the active RTMP connection (disconnects OBS)
   await mux.video.liveStreams.disable(stream.muxLiveStreamId);
-
-  await db
-    .update(streams)
-    .set({ isLive: false, updatedAt: new Date() })
-    .where(eq(streams.id, stream.id));
+  // Re-enable immediately so the RTMP endpoint is ready for next session
+  await mux.video.liveStreams.enable(stream.muxLiveStreamId);
 
   return NextResponse.json({
     message: "Stream stopped",

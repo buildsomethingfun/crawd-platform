@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { streams } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { authenticateApiKey } from "@/lib/auth-api-key";
-import { MUX_RTMP_URL } from "@/lib/mux";
+import { MUX_RTMP_URL, getMuxStreamStatus } from "@/lib/mux";
 
 /**
  * GET /api/stream - Get the authenticated user's stream
@@ -23,12 +23,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "No stream found" }, { status: 404 });
   }
 
+  const { isLive } = stream.muxLiveStreamId
+    ? await getMuxStreamStatus(stream.muxLiveStreamId)
+    : { isLive: false };
+
   return NextResponse.json({
     stream: {
       id: stream.id,
       name: stream.name,
-      isLive: stream.isLive,
-      viewerCount: stream.viewerCount,
+      isLive,
       rtmpUrl: MUX_RTMP_URL,
       streamKey: stream.streamKey,
       playbackId: stream.muxPlaybackId,

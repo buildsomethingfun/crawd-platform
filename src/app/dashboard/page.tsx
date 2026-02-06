@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { users, streams } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
-import { mux, MUX_RTMP_URL } from "@/lib/mux";
+import { mux, MUX_RTMP_URL, getMuxStreamStatus } from "@/lib/mux";
 import { CopyButton } from "./copy-button";
 
 async function ensureUserAndStream() {
@@ -64,6 +64,10 @@ export default async function DashboardPage() {
 
     const { stream } = data;
 
+    const isLive = stream.muxLiveStreamId
+      ? (await getMuxStreamStatus(stream.muxLiveStreamId)).isLive
+      : false;
+
     return (
       <div>
         <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
@@ -72,7 +76,7 @@ export default async function DashboardPage() {
         <div className="glass rounded-2xl p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">Stream Status</h2>
-            {stream.isLive ? (
+            {isLive ? (
               <span className="px-3 py-1 bg-red-500/20 text-red-400 text-sm rounded-lg flex items-center gap-2">
                 <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                 LIVE
@@ -83,7 +87,7 @@ export default async function DashboardPage() {
               </span>
             )}
           </div>
-          {stream.isLive && stream.muxPlaybackId && (
+          {isLive && stream.muxPlaybackId && (
             <a
               href={`/preview/${stream.muxPlaybackId}`}
               target="_blank"

@@ -3,10 +3,11 @@ import { db } from "@/db";
 import { streams } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { authenticateApiKey } from "@/lib/auth-api-key";
-import { mux } from "@/lib/mux";
+import { getMuxStreamStatus } from "@/lib/mux";
 
 /**
- * POST /api/stream/start - Enable the user's Mux live stream
+ * POST /api/stream/start - No-op. Streams go live automatically when OBS connects.
+ * Kept for CLI backwards compatibility.
  * Requires API key auth: Authorization: Bearer crawd_live_...
  */
 export async function POST(request: NextRequest) {
@@ -23,20 +24,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No stream found" }, { status: 404 });
   }
 
-  if (!stream.muxLiveStreamId) {
-    return NextResponse.json({ error: "No Mux stream configured" }, { status: 400 });
-  }
-
-  // Enable the live stream on Mux — this allows RTMP ingest
-  await mux.video.liveStreams.enable(stream.muxLiveStreamId);
-
-  await db
-    .update(streams)
-    .set({ isLive: true, updatedAt: new Date() })
-    .where(eq(streams.id, stream.id));
+  const { isLive } = stream.muxLiveStreamId
+    ? await getMuxStreamStatus(stream.muxLiveStreamId)
+    : { isLive: false };
 
   return NextResponse.json({
-    message: "Stream started",
-    stream: { isLive: true },
+    message: isLive
+      ? "Stream is already live"
+      : "Stream is ready — start OBS to go live automatically",
+    stream: { isLive },
   });
 }
