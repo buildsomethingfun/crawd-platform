@@ -3,9 +3,10 @@ import { db } from "@/db";
 import { streams } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { authenticateApiKey } from "@/lib/auth-api-key";
+import { mux } from "@/lib/mux";
 
 /**
- * POST /api/stream/stop - Set the user's stream to offline
+ * POST /api/stream/stop - Disable the user's Mux live stream
  * Requires API key auth: Authorization: Bearer crawd_live_...
  */
 export async function POST(request: NextRequest) {
@@ -22,9 +23,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No stream found" }, { status: 404 });
   }
 
-  if (!stream.isLive) {
-    return NextResponse.json({ message: "Stream is already offline", stream: { isLive: false } });
+  if (!stream.muxLiveStreamId) {
+    return NextResponse.json({ error: "No Mux stream configured" }, { status: 400 });
   }
+
+  // Disable the live stream on Mux — this cuts RTMP ingest and stops playback
+  await mux.video.liveStreams.disable(stream.muxLiveStreamId);
 
   await db
     .update(streams)

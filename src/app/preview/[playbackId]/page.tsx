@@ -1,4 +1,7 @@
 import Script from "next/script";
+import { db } from "@/db";
+import { streams, users } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 export default async function PreviewPage({
   params,
@@ -6,6 +9,16 @@ export default async function PreviewPage({
   params: Promise<{ playbackId: string }>;
 }) {
   const { playbackId } = await params;
+
+  const stream = await db.query.streams.findFirst({
+    where: eq(streams.muxPlaybackId, playbackId),
+  });
+
+  const user = stream
+    ? await db.query.users.findFirst({
+        where: eq(users.id, stream.userId),
+      })
+    : null;
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -23,9 +36,14 @@ export default async function PreviewPage({
         </div>
 
         <div className="mt-4 p-4 bg-white/5 rounded-lg">
-          <p className="text-sm text-gray-400">
-            Stream ID: <code className="text-gray-300">{playbackId}</code>
-          </p>
+          {user?.displayName && (
+            <h2 className="text-lg font-semibold text-white">
+              {user.displayName}
+            </h2>
+          )}
+          {user?.bio && (
+            <p className="mt-1 text-sm text-gray-400">{user.bio}</p>
+          )}
         </div>
       </div>
     </div>

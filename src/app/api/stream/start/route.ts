@@ -3,9 +3,10 @@ import { db } from "@/db";
 import { streams } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { authenticateApiKey } from "@/lib/auth-api-key";
+import { mux } from "@/lib/mux";
 
 /**
- * POST /api/stream/start - Set the user's stream to live
+ * POST /api/stream/start - Enable the user's Mux live stream
  * Requires API key auth: Authorization: Bearer crawd_live_...
  */
 export async function POST(request: NextRequest) {
@@ -22,9 +23,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No stream found" }, { status: 404 });
   }
 
-  if (stream.isLive) {
-    return NextResponse.json({ message: "Stream is already live", stream: { isLive: true } });
+  if (!stream.muxLiveStreamId) {
+    return NextResponse.json({ error: "No Mux stream configured" }, { status: 400 });
   }
+
+  // Enable the live stream on Mux — this allows RTMP ingest
+  await mux.video.liveStreams.enable(stream.muxLiveStreamId);
 
   await db
     .update(streams)
