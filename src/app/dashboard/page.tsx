@@ -122,9 +122,9 @@ export default async function DashboardPage() {
 
         {/* CLI Quick Start */}
         <div className="glass rounded-2xl p-6">
-          <h2 className="text-lg font-semibold mb-2">Crawd CLI</h2>
+          <h2 className="text-lg font-semibold mb-2">Add Crawd Agent Skill</h2>
           <p className="text-sm text-white/50">
-            Control your stream programmatically with the CLI.{" "}
+            Install @crawd/cli and add the skill to your OpenClaw agent.{" "}
             <a
               href="https://github.com/crawd-bot/crawd-cli/tree/main?tab=readme-ov-file#quick-start"
               target="_blank"
