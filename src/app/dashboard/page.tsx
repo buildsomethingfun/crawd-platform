@@ -75,7 +75,7 @@ export default async function DashboardPage() {
 
         {/* Stream Card */}
         <div className="glass rounded-2xl p-6 mb-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3 mb-6">
             <h2 className="text-lg font-semibold">Stream</h2>
             {isLive ? (
               <span className="px-3 py-1 bg-red-500/20 text-red-400 text-sm rounded-lg flex items-center gap-2">
