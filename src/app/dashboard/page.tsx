@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { mux, MUX_RTMP_URL, getMuxStreamStatus } from "@/lib/mux";
 import { CopyButton } from "./copy-button";
+import { SecretField } from "./secret-field";
 
 async function ensureUserAndStream() {
   const { userId } = await auth();
@@ -72,10 +73,10 @@ export default async function DashboardPage() {
       <div>
         <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
 
-        {/* Stream Status */}
+        {/* Stream Card */}
         <div className="glass rounded-2xl p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Stream Status</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold">Stream</h2>
             {isLive ? (
               <span className="px-3 py-1 bg-red-500/20 text-red-400 text-sm rounded-lg flex items-center gap-2">
                 <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
@@ -87,22 +88,19 @@ export default async function DashboardPage() {
               </span>
             )}
           </div>
+
           {isLive && stream.muxPlaybackId && (
             <a
               href={`/preview/${stream.muxPlaybackId}`}
               target="_blank"
-              className="text-accent hover:underline text-sm"
+              className="inline-block mb-6 text-accent hover:underline text-sm"
             >
               View live preview →
             </a>
           )}
-        </div>
 
-        {/* OBS Credentials */}
-        <div className="glass rounded-2xl p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">OBS Settings</h2>
-          <p className="text-sm text-white/50 mb-6">
-            Copy these settings into OBS Studio → Settings → Stream
+          <p className="text-sm text-white/50 mb-4">
+            OBS Studio → Settings → Stream
           </p>
 
           <div className="space-y-4">
@@ -118,41 +116,24 @@ export default async function DashboardPage() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs text-white/40 mb-2 uppercase tracking-wide">
-                Stream Key
-              </label>
-              <div className="flex items-center gap-2">
-                <code className="flex-1 px-4 py-3 bg-black/30 rounded-xl font-mono text-sm text-white/80 break-all">
-                  {stream.streamKey}
-                </code>
-                <CopyButton text={stream.streamKey} />
-              </div>
-            </div>
+            <SecretField value={stream.streamKey} label="Stream Key" />
           </div>
         </div>
 
-        {/* OpenClaw CLI */}
+        {/* CLI Quick Start */}
         <div className="glass rounded-2xl p-6">
-          <h2 className="text-lg font-semibold mb-2">Add Livestream Skill to OpenClaw</h2>
-          <p className="text-sm text-white/50 mb-6">
-            Let your AI agent control your stream with the Crawd CLI
+          <h2 className="text-lg font-semibold mb-2">Crawd CLI</h2>
+          <p className="text-sm text-white/50">
+            Control your stream programmatically with the CLI.{" "}
+            <a
+              href="https://github.com/crawd-bot/crawd-cli/tree/main?tab=readme-ov-file#quick-start"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent hover:underline"
+            >
+              Quick start guide →
+            </a>
           </p>
-
-          <div className="bg-black/30 rounded-xl p-4 font-mono text-sm space-y-2">
-            <p className="text-white/40"># Install the CLI</p>
-            <p className="text-white/80">npm install -g @crawd/cli</p>
-            <p className="text-white/80 mt-4"></p>
-            <p className="text-white/40"># Authenticate</p>
-            <p className="text-white/80">crawd auth</p>
-            <p className="text-white/80 mt-4"></p>
-            <p className="text-white/40"># Install the skill</p>
-            <p className="text-white/80">crawd skill install</p>
-            <p className="text-white/80 mt-4"></p>
-            <p className="text-white/40"># Control your stream</p>
-            <p className="text-white/80">crawd stream start</p>
-            <p className="text-white/80">crawd stream stop</p>
-          </div>
         </div>
       </div>
     );
